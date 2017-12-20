@@ -5,6 +5,7 @@ import {
   StyleProp,
   ListRenderItem,
   VirtualizedListProperties,
+  RefreshControl,
 } from 'react-native';
 import { Component, createElement } from 'react';
 const pull = require('pull-stream');
@@ -32,6 +33,12 @@ export interface PullFlatListProps<ItemT>
    * reaches the end.
    */
   pullAmount?: number;
+
+  /**
+   * Whether or not this list can be refreshed with the pull-to-refresh gesture.
+   * By default, this is false.
+   */
+  refreshable?: boolean;
 
   /**
    * Rendered in between each item, but not at the top or bottom
@@ -67,6 +74,11 @@ export interface PullFlatListProps<ItemT>
     | React.ReactElement<any>
     | (() => React.ReactElement<any>)
     | null;
+
+  /**
+   * The colors (at least one) that will be used to draw the refresh indicator.
+   */
+  refreshColors?: Array<string>;
 
   /**
    * Optional custom style for multi-item rows generated when numColumns > 1
@@ -142,12 +154,6 @@ export interface PullFlatListProps<ItemT>
   onEndReachedThreshold?: number | null;
 
   /**
-   * If provided, a standard RefreshControl will be added for "Pull to Refresh" functionality.
-   * Make sure to also set the refreshing prop correctly.
-   */
-  onRefresh?: (() => void) | null;
-
-  /**
    * Called when the viewability of rows changes, as defined by the `viewablePercentThreshold` prop.
    */
   onViewableItemsChanged?:
@@ -155,11 +161,6 @@ export interface PullFlatListProps<ItemT>
         info: { viewableItems: Array<ViewToken>; changed: Array<ViewToken> },
       ) => void)
     | null;
-
-  /**
-   * Set this true while waiting for new data from a refresh.
-   */
-  refreshing?: boolean | null;
 
   /**
    * Takes an item from data and renders it into the list. Typical usage:
@@ -193,6 +194,7 @@ export type State<T> = {
   data: Array<T>;
   isExpectingMore: boolean;
   updateInt: number;
+  refreshing: boolean;
 };
 
 const DEFAULT_INITIAL_PULL_AMOUNT = 4;
@@ -205,10 +207,16 @@ export default class PullFlatList<T> extends Component<
 > {
   constructor(props: PullFlatListProps<T>) {
     super(props);
-    this.state = { data: [], isExpectingMore: true, updateInt: 0 };
+    this.state = {
+      data: [],
+      isExpectingMore: true,
+      updateInt: 0,
+      refreshing: false,
+    };
     this.isPulling = false;
     this.morePullQueue = 0;
     this._onEndReached = this.onEndReached.bind(this);
+    this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
   }
 
   private scrollReadable?: Readable<T>;
@@ -216,6 +224,7 @@ export default class PullFlatList<T> extends Component<
   private isPulling: boolean;
   private morePullQueue: number;
   private _onEndReached: (info: { distanceFromEnd: number }) => void;
+  private _onRefresh: () => void;
 
   public componentDidMount() {
     if (this.props.getScrollStream) {
@@ -263,6 +272,7 @@ export default class PullFlatList<T> extends Component<
           data: [item].concat(prev.data),
           isExpectingMore: prev.isExpectingMore,
           updateInt: 1 - prev.updateInt,
+          refreshing: prev.refreshing,
         }));
         readable(null, read);
       }
@@ -277,6 +287,7 @@ export default class PullFlatList<T> extends Component<
       data: [],
       isExpectingMore: true,
       updateInt: 1 - prev.updateInt,
+      refreshing: prev.refreshing,
     }));
   }
 
@@ -289,6 +300,24 @@ export default class PullFlatList<T> extends Component<
   private onEndReached(info: { distanceFromEnd: number }): void {
     if (this.state.isExpectingMore) {
       this._pullWhenScrolling(this.props.pullAmount || DEFAULT_PULL_AMOUNT);
+    }
+  }
+
+  private onRefresh(): void {
+    if (this.scrollReadable) {
+      this.scrollReadable(true, () => {});
+    }
+    this.setState((prev: State<T>) => ({
+      data: [],
+      isExpectingMore: true,
+      updateInt: 1 - prev.updateInt,
+      refreshing: true,
+    }));
+    if (this.props.getScrollStream) {
+      this.scrollReadable = this.props.getScrollStream();
+      this._pullWhenScrolling(
+        this.props.initialNumToRender || DEFAULT_INITIAL_PULL_AMOUNT,
+      );
     }
   }
 
@@ -318,6 +347,7 @@ export default class PullFlatList<T> extends Component<
             data: newData,
             isExpectingMore: prev.isExpectingMore,
             updateInt: 1 - prev.updateInt,
+            refreshing: prev.refreshing,
           }));
         } else if (idxInBuffer >= 0) {
           buffer[idxInBuffer] = item;
@@ -341,6 +371,7 @@ export default class PullFlatList<T> extends Component<
       data: prev.data.concat(buffer),
       isExpectingMore,
       updateInt: 1 - prev.updateInt,
+      refreshing: false,
     }));
     const remaining = this.morePullQueue;
     if (remaining > 0) {
@@ -351,16 +382,24 @@ export default class PullFlatList<T> extends Component<
 
   public render() {
     const props = this.props;
+    const state = this.state;
     const ListFooterComponent =
-      props.ListFooterComponent && this.state.isExpectingMore
+      props.ListFooterComponent && state.isExpectingMore
         ? props.ListFooterComponent
         : null;
 
     return createElement(FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
-      data: this.state.data,
-      extraData: this.state.updateInt,
+      refreshControl: props.refreshable
+        ? createElement(RefreshControl, {
+            colors: props.refreshColors || ['#000000'],
+            onRefresh: this._onRefresh,
+            refreshing: state.refreshing,
+          })
+        : undefined,
+      data: state.data,
+      extraData: state.updateInt,
       onEndReached: this._onEndReached,
       ListFooterComponent,
     } as any) as any;
