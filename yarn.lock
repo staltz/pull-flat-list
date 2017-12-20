@@ -2,10 +2,6 @@
 # yarn lockfile v1
 
 
-"@types/node@^8.0.30":
-  version "8.5.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.2.tgz#83b8103fa9a2c2e83d78f701a9aa7c9539739aa5"
-
 "@types/react-native@>=0.49.0":
   version "0.51.4"
   resolved "https://registry.yarnpkg.com/@types/react-native/-/react-native-0.51.4.tgz#92756c0600c18335a12d324b53b3231f33fe758f"
