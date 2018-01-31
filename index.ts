@@ -215,6 +215,7 @@ export default class PullFlatList<T> extends Component<
     };
     this.isPulling = false;
     this.morePullQueue = 0;
+    this.iteration = 0;
     this._onEndReached = this.onEndReached.bind(this);
     this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
   }
@@ -223,6 +224,7 @@ export default class PullFlatList<T> extends Component<
   private prefixReadable?: Readable<T>;
   private isPulling: boolean;
   private morePullQueue: number;
+  private iteration: number;
   private _onEndReached: (info: { distanceFromEnd: number }) => void;
   private _onRefresh: () => void;
 
@@ -313,6 +315,9 @@ export default class PullFlatList<T> extends Component<
       updateInt: 1 - prev.updateInt,
       refreshing: true,
     }));
+    this.iteration += 1;
+    this.isPulling = false;
+    this.morePullQueue = 0;
     if (this.props.getScrollStream) {
       this.scrollReadable = this.props.getScrollStream();
       this._pullWhenScrolling(
@@ -330,9 +335,11 @@ export default class PullFlatList<T> extends Component<
     }
     this.isPulling = true;
     const key: (item: T, idx?: number) => any = this.props.keyExtractor as any;
+    const myIteration = this.iteration;
     const that = this;
     const buffer: Array<T> = [];
     readable(null, function read(end, item) {
+      if (that.iteration !== myIteration) return;
       if (end === true) {
         that._onEndPullingScroll(buffer, false);
       } else if (item) {
