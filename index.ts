@@ -353,13 +353,13 @@ export default class PullFlatList<T> extends Component<
           buffer[idxInBuffer] = item;
         } else {
           buffer.push(item);
+        }
 
-          // Continue
-          if (buffer.length >= amount) {
-            that._onEndPullingScroll(buffer, that.state.isExpectingMore);
-          } else if (that.state.isExpectingMore) {
-            readable(null, read);
-          }
+        // Continue
+        if (buffer.length >= amount) {
+          that._onEndPullingScroll(buffer, that.state.isExpectingMore);
+        } else if (that.state.isExpectingMore) {
+          readable(null, read);
         }
       }
     });
