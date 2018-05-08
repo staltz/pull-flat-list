@@ -1,8 +1,7 @@
 {
   "name": "pull-flat-list",
   "version": "1.2.0",
-  "description":
-    "FlatList React Native component capable of scrolling through pull-streams",
+  "description": "FlatList React Native component capable of scrolling through pull-streams",
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
@@ -19,6 +18,6 @@
     "react-native": ">=0.49.0"
   },
   "devDependencies": {
-    "typescript": "2.6.x"
+    "typescript": "2.8.x"
   }
 }

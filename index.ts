@@ -108,7 +108,7 @@ export interface PullFlatListProps<ItemT>
   getItemLayout?: (
     data: Array<ItemT> | null,
     index: number,
-  ) => { length: number; offset: number; index: number };
+  ) => {length: number; offset: number; index: number};
 
   /**
    * If true, renders items next to each other horizontally instead of stacked vertically.
@@ -143,7 +143,7 @@ export interface PullFlatListProps<ItemT>
   /**
    * Called once when the scroll position gets within onEndReachedThreshold of the rendered content.
    */
-  onEndReached?: ((info: { distanceFromEnd: number }) => void) | null;
+  onEndReached?: ((info: {distanceFromEnd: number}) => void) | null;
 
   /**
    * How far from the end (in units of visible length of the list) the bottom edge of the
@@ -158,7 +158,7 @@ export interface PullFlatListProps<ItemT>
    */
   onViewableItemsChanged?:
     | ((
-        info: { viewableItems: Array<ViewToken>; changed: Array<ViewToken> },
+        info: {viewableItems: Array<ViewToken>; changed: Array<ViewToken>},
       ) => void)
     | null;
 
@@ -222,7 +222,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   private isPulling: boolean;
   private morePullQueue: number;
   private iteration: number;
-  private _onEndReached: (info: { distanceFromEnd: number }) => void;
+  private _onEndReached: (info: {distanceFromEnd: number}) => void;
   private _onRefresh: () => void;
 
   public componentDidMount() {
@@ -296,7 +296,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     }
   }
 
-  private onEndReached(info: { distanceFromEnd: number }): void {
+  private onEndReached(info: {distanceFromEnd: number}): void {
     if (this.state.isExpectingMore) {
       this._pullWhenScrolling(this.props.pullAmount || DEFAULT_PULL_AMOUNT);
     }
