@@ -7,7 +7,7 @@ import {
   VirtualizedListProperties,
   RefreshControl,
 } from 'react-native';
-import { Component, createElement } from 'react';
+import {Component, createElement, forwardRef, RefObject} from 'react';
 const pull = require('pull-stream');
 
 export type Callback<T> = (endOrErr: boolean | any, data?: T) => void;
@@ -201,10 +201,7 @@ const DEFAULT_INITIAL_PULL_AMOUNT = 4;
 const DEFAULT_PULL_AMOUNT = 30;
 const DEFAULT_END_THRESHOLD = 4;
 
-export default class PullFlatList<T> extends Component<
-  PullFlatListProps<T>,
-  State<T>
-> {
+export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   constructor(props: PullFlatListProps<T>) {
     super(props);
     this.state = {
@@ -412,3 +409,7 @@ export default class PullFlatList<T> extends Component<
     } as any) as any;
   }
 }
+
+export default forwardRef((props: any, ref: any) => {
+  return createElement(PullFlatList, {...props, forwardedRef: ref});
+}) as typeof PullFlatList;
