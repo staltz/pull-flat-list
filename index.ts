@@ -395,6 +395,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     return createElement(FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
+      ref: (props as any).forwardedRef,
       refreshControl: props.refreshable
         ? createElement(RefreshControl, {
             colors: props.refreshColors || ['#000000'],
