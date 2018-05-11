@@ -321,6 +321,9 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         this.props.initialNumToRender || DEFAULT_INITIAL_PULL_AMOUNT,
       );
     }
+    if (this.props.onRefresh) {
+      this.props.onRefresh();
+    }
   }
 
   private _pullWhenScrolling(amount: number): void {
