@@ -398,6 +398,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     return createElement(FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
+      onRefresh: undefined,
       ref: (props as any).forwardedRef,
       refreshControl: props.refreshable
         ? createElement(RefreshControl, {
