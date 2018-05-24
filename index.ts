@@ -7,7 +7,7 @@ import {
   VirtualizedListProperties,
   RefreshControl,
 } from 'react-native';
-import {Component, createElement, forwardRef, RefObject} from 'react';
+import {Component, createElement, RefObject} from 'react';
 const pull = require('pull-stream');
 
 export type Callback<T> = (endOrErr: boolean | any, data?: T) => void;
@@ -215,6 +215,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     this.iteration = 0;
     this._onEndReached = this.onEndReached.bind(this);
     this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
+    this.flatListRef = undefined;
   }
 
   private scrollReadable?: Readable<T>;
@@ -222,6 +223,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   private isPulling: boolean;
   private morePullQueue: number;
   private iteration: number;
+  private flatListRef?: RefObject<FlatList<T>>;
   private _onEndReached: (info: {distanceFromEnd: number}) => void;
   private _onRefresh: () => void;
 
@@ -387,6 +389,12 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     }
   }
 
+  scrollToOffset(opts: any) {
+    if (this.flatListRef) {
+      (this.flatListRef as any).scrollToOffset(opts);
+    }
+  }
+
   public render() {
     const props = this.props;
     const state = this.state;
@@ -399,7 +407,9 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
       onRefresh: undefined,
-      ref: (props as any).forwardedRef,
+      ref: (r: any) => {
+        this.flatListRef = r;
+      },
       refreshControl: props.refreshable
         ? createElement(RefreshControl, {
             colors: props.refreshColors || ['#000000'],
@@ -415,6 +425,4 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 }
 
-export default forwardRef((props: any, ref: any) => {
-  return createElement(PullFlatList, {...props, forwardedRef: ref});
-}) as typeof PullFlatList;
+export default PullFlatList;
