@@ -389,10 +389,14 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     }
   }
 
-  scrollToOffset(opts: any) {
+  public scrollToOffset(opts: any) {
     if (this.flatListRef) {
       (this.flatListRef as any).scrollToOffset(opts);
     }
+  }
+
+  public forceRefresh() {
+    this.onRefresh();
   }
 
   public render() {
