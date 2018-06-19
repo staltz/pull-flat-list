@@ -406,6 +406,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       props.ListFooterComponent && state.isExpectingMore
         ? props.ListFooterComponent
         : null;
+    const isLoadingInitial = state.isExpectingMore && state.data.length === 0;
 
     return createElement(FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
@@ -419,7 +420,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
             colors: props.refreshColors || ['#000000'],
             onRefresh: this._onRefresh,
             progressViewOffset: props.progressViewOffset || undefined,
-            refreshing: state.refreshing,
+            refreshing: state.refreshing || isLoadingInitial,
           })
         : undefined,
       data: state.data,
