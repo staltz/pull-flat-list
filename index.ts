@@ -418,6 +418,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         ? createElement(RefreshControl, {
             colors: props.refreshColors || ['#000000'],
             onRefresh: this._onRefresh,
+            progressViewOffset: props.progressViewOffset || undefined,
             refreshing: state.refreshing,
           })
         : undefined,
