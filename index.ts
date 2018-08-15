@@ -402,16 +402,24 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   public render() {
     const props = this.props;
     const state = this.state;
+    const isEmpty =
+      state.data.length === 0 &&
+      !state.isExpectingMore &&
+      !state.refreshing &&
+      !this.isPulling;
     const ListFooterComponent =
       props.ListFooterComponent && state.isExpectingMore
         ? props.ListFooterComponent
-        : null;
+        : isEmpty
+          ? props.ListEmptyComponent
+          : null;
     const isLoadingInitial = state.isExpectingMore && state.data.length === 0;
 
     return createElement(FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
       onRefresh: undefined,
+      ListEmptyComponent: undefined,
       ref: (r: any) => {
         this.flatListRef = r;
       },
