@@ -154,6 +154,12 @@ export interface PullFlatListProps<ItemT>
   onEndReachedThreshold?: number | null;
 
   /**
+   * Called once when the PullFlatList has completed its first burst of pulls
+   * of data. Emits the number of items in the data array.
+   */
+  onInitialPullDone?: (amountItems: number) => void;
+
+  /**
    * Called when the viewability of rows changes, as defined by the `viewablePercentThreshold` prop.
    */
   onViewableItemsChanged?:
@@ -376,6 +382,9 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
   private _onEndPullingScroll(buffer: Array<T>, isExpectingMore: boolean) {
     this.isPulling = false;
+    if (this.iteration === 0 && this.props.onInitialPullDone) {
+      this.props.onInitialPullDone(this.state.data.length + buffer.length);
+    }
     this.setState((prev: State<T>) => ({
       data: prev.data.concat(buffer),
       isExpectingMore,

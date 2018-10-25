@@ -25,4 +25,5 @@ import PullFlatList from 'pull-flat-list';
 * `pullAmount` (optional, default is 30) How many items to pull from the pull stream when the scroll position reaches the end.
 * `refreshable` (optional, default is false) Boolean indicating whether or not this list can be refreshed with the pull-to-refresh gesture.
 * `refreshColors` (optional) The colors (at least one) that will be used to draw the refresh indicator.
+* `onInitialPullDone` (optional) Called once when the PullFlatList has completed its first burst of pulls of data. Emits the number of items in the data array.
 * (other props) all other props from FlatList are supported, except `data` and `extraData`, because this module's purpose is to manage that for you
