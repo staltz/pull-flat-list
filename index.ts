@@ -163,9 +163,10 @@ export interface PullFlatListProps<ItemT>
    * Called when the viewability of rows changes, as defined by the `viewablePercentThreshold` prop.
    */
   onViewableItemsChanged?:
-    | ((
-        info: {viewableItems: Array<ViewToken>; changed: Array<ViewToken>},
-      ) => void)
+    | ((info: {
+        viewableItems: Array<ViewToken>;
+        changed: Array<ViewToken>;
+      }) => void)
     | null;
 
   /**
@@ -219,6 +220,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     this.isPulling = false;
     this.morePullQueue = 0;
     this.iteration = 0;
+    this.initialDone = false;
     this._onEndReached = this.onEndReached.bind(this);
     this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
     this.flatListRef = undefined;
@@ -229,9 +231,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   private isPulling: boolean;
   private morePullQueue: number;
   private iteration: number;
+  private initialDone: boolean;
   private flatListRef?: RefObject<FlatList<T>>;
   private _onEndReached: (info: {distanceFromEnd: number}) => void;
-  private _onRefresh: () => void;
+  private _onRefresh?: () => void;
 
   public componentDidMount() {
     if (this.props.getScrollStream) {
@@ -382,7 +385,8 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
   private _onEndPullingScroll(buffer: Array<T>, isExpectingMore: boolean) {
     this.isPulling = false;
-    if (this.iteration === 0 && this.props.onInitialPullDone) {
+    if (!this.initialDone && this.props.onInitialPullDone) {
+      this.initialDone = true;
       this.props.onInitialPullDone(this.state.data.length + buffer.length);
     }
     this.setState((prev: State<T>) => ({
@@ -420,8 +424,8 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       props.ListFooterComponent && state.isExpectingMore
         ? props.ListFooterComponent
         : isEmpty
-          ? props.ListEmptyComponent
-          : null;
+        ? props.ListEmptyComponent
+        : null;
     const isLoadingInitial = state.isExpectingMore && state.data.length === 0;
 
     return createElement(FlatList, {
