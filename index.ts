@@ -263,7 +263,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     }
     if (this.state.isExpectingMore) {
       this._pullWhenScrolling(
-        this.props.initialNumToRender || DEFAULT_INITIAL_PULL_AMOUNT,
+        this.props.initialNumToRender ?? DEFAULT_INITIAL_PULL_AMOUNT,
       );
     }
   }
@@ -309,7 +309,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
   private onEndReached(info: {distanceFromEnd: number}): void {
     if (this.state.isExpectingMore) {
-      this._pullWhenScrolling(this.props.pullAmount || DEFAULT_PULL_AMOUNT);
+      this._pullWhenScrolling(this.props.pullAmount ?? DEFAULT_PULL_AMOUNT);
     }
   }
 
@@ -329,7 +329,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     if (this.props.getScrollStream) {
       this.scrollReadable = this.props.getScrollStream();
       this._pullWhenScrolling(
-        this.props.initialNumToRender || DEFAULT_INITIAL_PULL_AMOUNT,
+        this.props.initialNumToRender ?? DEFAULT_INITIAL_PULL_AMOUNT,
       );
     }
     if (this.props.onRefresh) {
@@ -438,10 +438,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       },
       refreshControl: props.refreshable
         ? createElement(RefreshControl, {
-            colors: props.refreshColors || ['#000000'],
+            colors: props.refreshColors ?? ['#000000'],
             onRefresh: this._onRefresh,
-            progressViewOffset: props.progressViewOffset || undefined,
-            refreshing: state.refreshing || isLoadingInitial,
+            progressViewOffset: props.progressViewOffset,
+            refreshing: state.refreshing ?? isLoadingInitial,
           })
         : undefined,
       data: state.data,
