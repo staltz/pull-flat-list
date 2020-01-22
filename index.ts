@@ -6,9 +6,9 @@ import {
   ListRenderItem,
   VirtualizedListProperties,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import {Component, createElement, RefObject} from 'react';
-const pull = require('pull-stream');
 
 export type Callback<T> = (endOrErr: boolean | any, data?: T) => void;
 export type Readable<T> = (endOrErr: boolean | any, cb?: Callback<T>) => void;
@@ -197,6 +197,13 @@ export interface PullFlatListProps<ItemT>
   removeClippedSubviews?: boolean;
 }
 
+/**
+ * This depends on the internals of Animated.createAnimatedComponent
+ */
+type AnimatedFlatListRef<T> = {
+  _component?: FlatList<T>;
+};
+
 export type State<T> = {
   data: Array<T>;
   isExpectingMore: boolean;
@@ -209,6 +216,16 @@ const DEFAULT_PULL_AMOUNT = 30;
 const DEFAULT_END_THRESHOLD = 4;
 
 export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
+  private scrollReadable?: Readable<T>;
+  private prefixReadable?: Readable<T>;
+  private isPulling: boolean;
+  private morePullQueue: number;
+  private iteration: number;
+  private initialDone: boolean;
+  private flatListRef?: AnimatedFlatListRef<T>;
+  private _onEndReached: (info: {distanceFromEnd: number}) => void;
+  private _onRefresh?: () => void;
+
   constructor(props: PullFlatListProps<T>) {
     super(props);
     this.state = {
@@ -225,16 +242,6 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
     this.flatListRef = undefined;
   }
-
-  private scrollReadable?: Readable<T>;
-  private prefixReadable?: Readable<T>;
-  private isPulling: boolean;
-  private morePullQueue: number;
-  private iteration: number;
-  private initialDone: boolean;
-  private flatListRef?: RefObject<FlatList<T>>;
-  private _onEndReached: (info: {distanceFromEnd: number}) => void;
-  private _onRefresh?: () => void;
 
   public componentDidMount() {
     if (this.props.getScrollStream) {
@@ -403,8 +410,11 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public scrollToOffset(opts: any) {
-    if (this.flatListRef) {
-      (this.flatListRef as any).scrollToOffset(opts);
+    if (
+      this.flatListRef?._component &&
+      typeof this.flatListRef._component.scrollToOffset === 'function'
+    ) {
+      this.flatListRef._component.scrollToOffset(opts);
     }
   }
 
@@ -428,7 +438,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         : null;
     const isLoadingInitial = state.isExpectingMore && state.data.length === 0;
 
-    return createElement(FlatList, {
+    return createElement(Animated.FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
       ...props,
       onRefresh: undefined,
@@ -448,7 +458,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       extraData: state.updateInt,
       onEndReached: this._onEndReached,
       ListFooterComponent,
-    } as any) as any;
+    });
   }
 }
 
