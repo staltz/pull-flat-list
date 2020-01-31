@@ -41,6 +41,12 @@ export interface PullFlatListProps<ItemT>
   refreshable?: boolean;
 
   /**
+   * Called once when the PullFlatList has completed its first burst of pulls
+   * of data. Emits the number of items in the data array.
+   */
+  onInitialPullDone?: (amountItems: number) => void;
+
+  /**
    * Rendered in between each item, but not at the top or bottom
    */
   ItemSeparatorComponent?:
@@ -154,12 +160,6 @@ export interface PullFlatListProps<ItemT>
   onEndReachedThreshold?: number | null;
 
   /**
-   * Called once when the PullFlatList has completed its first burst of pulls
-   * of data. Emits the number of items in the data array.
-   */
-  onInitialPullDone?: (amountItems: number) => void;
-
-  /**
    * Called when the viewability of rows changes, as defined by the `viewablePercentThreshold` prop.
    */
   onViewableItemsChanged?:
@@ -219,6 +219,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   private scrollReadable?: Readable<T>;
   private prefixReadable?: Readable<T>;
   private isPulling: boolean;
+  private retainableRefresh: boolean;
   private morePullQueue: number;
   private iteration: number;
   private initialDone: boolean;
@@ -235,6 +236,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       refreshing: false,
     };
     this.isPulling = false;
+    this.retainableRefresh = false;
     this.morePullQueue = 0;
     this.iteration = 0;
     this.initialDone = false;
@@ -325,7 +327,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       this.scrollReadable(true, () => {});
     }
     this.setState((prev: State<T>) => ({
-      data: [],
+      data: this.retainableRefresh ? prev.data : [],
       isExpectingMore: true,
       updateInt: 1 - prev.updateInt,
       refreshing: true,
@@ -365,7 +367,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         const idxInBuffer = buffer.findIndex(x => key(x) === key(item));
 
         // Consume message
-        if (idxStored >= 0) {
+        if (!that.retainableRefresh && idxStored >= 0) {
           const newData = that.state.data;
           newData[idxStored] = item;
           that.setState((prev: State<T>) => ({
@@ -397,11 +399,12 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       this.props.onInitialPullDone(this.state.data.length + buffer.length);
     }
     this.setState((prev: State<T>) => ({
-      data: prev.data.concat(buffer),
+      data: this.retainableRefresh ? buffer : prev.data.concat(buffer),
       isExpectingMore,
       updateInt: 1 - prev.updateInt,
       refreshing: false,
     }));
+    this.retainableRefresh = false;
     const remaining = this.morePullQueue;
     if (remaining > 0) {
       this.morePullQueue = 0;
@@ -418,7 +421,8 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     }
   }
 
-  public forceRefresh() {
+  public forceRefresh(retain: boolean | undefined) {
+    this.retainableRefresh = !!retain;
     this.onRefresh();
   }
 

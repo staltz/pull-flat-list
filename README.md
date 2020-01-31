@@ -27,3 +27,8 @@ import PullFlatList from 'pull-flat-list';
 * `refreshColors` (optional) The colors (at least one) that will be used to draw the refresh indicator.
 * `onInitialPullDone` (optional) Called once when the PullFlatList has completed its first burst of pulls of data. Emits the number of items in the data array.
 * (other props) all other props from FlatList are supported, except `data` and `extraData`, because this module's purpose is to manage that for you
+
+## Methods
+
+* `forceRefresh(retainable?: boolean)` This method will force a refresh to occur,
+causing a pull of the scroll stream to start over. However, this method will **not** cause the callback `onInitialPullDone` to be triggered. The argument `retainable` signals (when `false`) whether you want the FlatList's rendering to be "cleaned" or (when `true`) if you want the FlatList to retain the rendering of the previous views *until* the first pull returns. By default, `retainable = false`.
