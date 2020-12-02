@@ -12,15 +12,15 @@
   "author": "staltz.com",
   "license": "MIT",
   "dependencies": {
-    "@types/react": ">=16.0.0",
-    "@types/react-native": ">=0.49.0",
+    "@types/react": ">=16.9.0",
+    "@types/react-native": ">=0.63.0",
     "pull-stream": ">=3",
-    "react": ">=16.0.0",
-    "react-native": ">=0.49.0"
+    "react": ">=16.9.0",
+    "react-native": ">=0.63.0"
   },
   "devDependencies": {
     "@types/react": "~16.9.18",
-    "@types/react-native": "~0.61.2",
-    "typescript": "3.7.x"
+    "@types/react-native": "~0.63.30",
+    "typescript": "4.1.x"
   }
 }

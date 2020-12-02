@@ -4,18 +4,17 @@ import {
   ViewToken,
   StyleProp,
   ListRenderItem,
-  VirtualizedListProperties,
+  VirtualizedListProps,
   RefreshControl,
   Animated,
 } from 'react-native';
-import {Component, createElement, RefObject} from 'react';
+import {Component, createElement} from 'react';
 
 export type Callback<T> = (endOrErr: boolean | any, data?: T) => void;
 export type Readable<T> = (endOrErr: boolean | any, cb?: Callback<T>) => void;
 export type GetReadable<T> = (opts?: any) => Readable<T>;
 
-export interface PullFlatListProps<ItemT>
-  extends VirtualizedListProperties<ItemT> {
+export interface PullFlatListProps<ItemT> extends VirtualizedListProps<ItemT> {
   /**
    * Factory function which returns a pull stream to be used when scrolling
    * the FlatList, to pull more items and append them to the list.
@@ -363,8 +362,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
       if (end === true) {
         that._onEndPullingScroll(buffer, false);
       } else if (item) {
-        const idxStored = that.state.data.findIndex(x => key(x) === key(item));
-        const idxInBuffer = buffer.findIndex(x => key(x) === key(item));
+        const idxStored = that.state.data.findIndex(
+          (x) => key(x) === key(item),
+        );
+        const idxInBuffer = buffer.findIndex((x) => key(x) === key(item));
 
         // Consume message
         if (!that.retainableRefresh && idxStored >= 0) {
@@ -413,7 +414,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public scrollToOffset(opts: any) {
-    if (
+    if ((this.flatListRef as any)?.scrollToOffset) {
+      (this.flatListRef as any).scrollToOffset(opts);
+      return;
+    } else if (
       this.flatListRef?._component &&
       typeof this.flatListRef._component.scrollToOffset === 'function'
     ) {
@@ -444,10 +448,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
     return createElement(Animated.FlatList, {
       onEndReachedThreshold: DEFAULT_END_THRESHOLD,
-      ...props,
+      ...(props as any),
       onRefresh: undefined,
       ListEmptyComponent: undefined,
-      ref: (r: any) => {
+      ['ref' as any]: (r: any) => {
         this.flatListRef = r;
       },
       refreshControl: props.refreshable
