@@ -6,8 +6,7 @@
   "typings": "index.d.ts",
   "homepage": "https://github.com/staltz/pull-flat-list",
   "scripts": {
-    "compile": "tsc",
-    "prepublishOnly": "npm run compile"
+    "compile": "tsc"
   },
   "author": "staltz.com",
   "license": "MIT",
