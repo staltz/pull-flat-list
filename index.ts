@@ -46,6 +46,12 @@ export interface PullFlatListProps<ItemT> extends VirtualizedListProps<ItemT> {
   onInitialPullDone?: (amountItems: number) => void;
 
   /**
+   * Called once when the PullFlatList has completed pulling all data from
+   * the source.
+   */
+  onPullingComplete?: () => void;
+
+  /**
    * Rendered in between each item, but not at the top or bottom
    */
   ItemSeparatorComponent?:
@@ -361,6 +367,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     readable(null, function read(end, item) {
       if (that.iteration !== myIteration) return;
       if (end === true) {
+        that.props.onPullingComplete?.();
         that._onEndPullingScroll(buffer, false);
       } else if (item) {
         const idxStored = that.state.data.findIndex(
