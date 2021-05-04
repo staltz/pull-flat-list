@@ -258,9 +258,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     this.stopPrefixListener();
   }
 
-  public componentWillReceiveProps(nextProps: PullFlatListProps<T>) {
+  public componentDidUpdate(prevProps: PullFlatListProps<T>) {
+    const nextProps = this.props
     const nextReadable = nextProps.getScrollStream;
-    if (nextReadable && nextReadable !== this.props.getScrollStream) {
+    if (nextReadable && nextReadable !== prevProps.getScrollStream) {
       this.startScrollListener(nextReadable());
     }
   }
