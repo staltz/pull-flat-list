@@ -265,10 +265,14 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public componentDidUpdate(prevProps: PullFlatListProps<T>) {
-    const nextProps = this.props
-    const nextReadable = nextProps.getScrollStream;
-    if (nextReadable && nextReadable !== prevProps.getScrollStream) {
-      this.startScrollListener(nextReadable());
+    const nextProps = this.props;
+    const nextGetReadable = nextProps.getScrollStream;
+    const prevGetReadable = prevProps.getScrollStream;
+
+    if (nextGetReadable !== prevGetReadable) {
+      this.stopScrollListener(() => {
+        this.startScrollListener(nextGetReadable?.());
+      });
     }
   }
 
@@ -304,16 +308,19 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     });
   }
 
-  public stopScrollListener() {
+  public stopScrollListener(cb?: () => void) {
     if (this.scrollReadable) {
       this.scrollReadable(true, () => {});
     }
-    this.setState((prev: State<T>) => ({
-      data: [],
-      isExpectingMore: true,
-      updateInt: 1 - prev.updateInt,
-      refreshing: prev.refreshing,
-    }));
+    this.setState(
+      (prev: State<T>) => ({
+        data: [],
+        isExpectingMore: true,
+        updateInt: 1 - prev.updateInt,
+        refreshing: prev.refreshing,
+      }),
+      cb,
+    );
   }
 
   public stopPrefixListener() {
