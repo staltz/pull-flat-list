@@ -205,16 +205,16 @@ export interface PullFlatListProps<ItemT> extends VirtualizedListProps<ItemT> {
 /**
  * This depends on the internals of Animated.createAnimatedComponent
  */
-type AnimatedFlatListRef<T> = {
+interface AnimatedFlatListRef<T> {
   _component?: FlatList<T>;
-};
+}
 
-export type State<T> = {
+export interface State<T> {
   data: Array<T>;
   isExpectingMore: boolean;
   updateInt: number;
   refreshing: boolean;
-};
+}
 
 const DEFAULT_INITIAL_PULL_AMOUNT = 4;
 const DEFAULT_PULL_AMOUNT = 30;
@@ -228,7 +228,8 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   private morePullQueue: number;
   private iteration: number;
   private initialDone: boolean;
-  private flatListRef?: AnimatedFlatListRef<T>;
+  private unmounting: boolean;
+  private flatListRef: AnimatedFlatListRef<T> | null;
   private _onEndReached: (info: {distanceFromEnd: number}) => void;
   private _onRefresh?: () => void;
 
@@ -245,12 +246,14 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     this.morePullQueue = 0;
     this.iteration = 0;
     this.initialDone = false;
+    this.unmounting = false;
     this._onEndReached = this.onEndReached.bind(this);
     this._onRefresh = props.refreshable ? this.onRefresh.bind(this) : undefined;
-    this.flatListRef = undefined;
+    this.flatListRef = null;
   }
 
   public componentDidMount() {
+    this.unmounting = false;
     if (this.props.getScrollStream) {
       this.startScrollListener(this.props.getScrollStream());
     }
@@ -260,6 +263,8 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public componentWillUnmount() {
+    this.unmounting = true;
+    this.flatListRef = null;
     this.stopScrollListener();
     this.stopPrefixListener();
   }
@@ -271,12 +276,15 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
     if (nextGetReadable !== prevGetReadable) {
       this.stopScrollListener(() => {
-        this.startScrollListener(nextGetReadable?.());
+        if (!this.unmounting) {
+          this.startScrollListener(nextGetReadable?.());
+        }
       });
     }
   }
 
   public startScrollListener(readable?: Readable<T> | null) {
+    if (this.unmounting) return;
     if (readable) {
       this.scrollReadable = readable;
     }
@@ -288,13 +296,14 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public startPrefixListener(readable?: Readable<T> | null) {
-    if (!readable) {
-      return;
-    }
+    if (this.unmounting) return;
+    if (!readable) return;
     this.prefixReadable = readable;
     const that = this;
     readable(null, function read(end, item) {
-      if (end) {
+      if (end) return;
+      else if (that.unmounting) {
+        readable(true, () => {});
         return;
       } else if (item) {
         that.setState((prev: State<T>) => ({
@@ -312,15 +321,20 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     if (this.scrollReadable) {
       this.scrollReadable(true, () => {});
     }
-    this.setState(
-      (prev: State<T>) => ({
-        data: [],
-        isExpectingMore: true,
-        updateInt: 1 - prev.updateInt,
-        refreshing: prev.refreshing,
-      }),
-      cb,
-    );
+
+    if (this.unmounting) {
+      cb?.();
+    } else {
+      this.setState(
+        (prev: State<T>) => ({
+          data: [],
+          isExpectingMore: true,
+          updateInt: 1 - prev.updateInt,
+          refreshing: prev.refreshing,
+        }),
+        cb,
+      );
+    }
   }
 
   public stopPrefixListener() {
@@ -339,6 +353,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     if (this.scrollReadable) {
       this.scrollReadable(true, () => {});
     }
+    if (this.unmounting) return;
     this.setState((prev: State<T>) => ({
       data: this.retainableRefresh ? prev.data : [],
       isExpectingMore: true,
@@ -360,6 +375,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   private _pullWhenScrolling(amount: number): void {
+    if (this.unmounting) return;
     const readable = this.scrollReadable;
     if (!readable) return;
     if (this.isPulling) {
@@ -377,6 +393,10 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         that.props.onPullingComplete?.();
         that._onEndPullingScroll(buffer, false);
       } else if (item) {
+        if (that.unmounting) {
+          readable(true, () => {});
+          return;
+        }
         const idxStored = that.state.data.findIndex(
           (x) => key(x) === key(item),
         );
@@ -409,6 +429,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   private _onEndPullingScroll(buffer: Array<T>, isExpectingMore: boolean) {
+    if (this.unmounting) return;
     this.isPulling = false;
     if (!this.initialDone && this.props.onInitialPullDone) {
       this.initialDone = true;
