@@ -277,6 +277,9 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     if (nextGetReadable !== prevGetReadable) {
       this.stopScrollListener(() => {
         if (!this.unmounting) {
+          this.isPulling = false;
+          this.morePullQueue = 0;
+          this.iteration = 0;
           this.startScrollListener(nextGetReadable?.());
         }
       });
