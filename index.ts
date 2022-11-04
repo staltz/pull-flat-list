@@ -271,8 +271,14 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
 
   public componentDidUpdate(prevProps: PullFlatListProps<T>) {
     const nextProps = this.props;
-    const { getScrollStream: nextGetScrollReadable, getPrefixStream: nextGetPrefixReadable } = nextProps;
-    const { getScrollStream: prevGetScrollReadable, getPrefixStream: prevGetPrefixReadable } = prevProps;
+    const {
+      getScrollStream: nextGetScrollReadable,
+      getPrefixStream: nextGetPrefixReadable,
+    } = nextProps;
+    const {
+      getScrollStream: prevGetScrollReadable,
+      getPrefixStream: prevGetPrefixReadable,
+    } = prevProps;
 
     if (nextGetScrollReadable !== prevGetScrollReadable) {
       this.stopScrollListener(() => {
@@ -290,7 +296,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         if (!this.unmounting) {
           this.startPrefixListener(nextGetPrefixReadable?.());
         }
-      })
+      });
     }
   }
 
@@ -298,6 +304,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
     if (this.unmounting) return;
     if (readable) {
       this.scrollReadable = readable;
+      this.scrollToOffset({offset: 0, animated: false});
     }
     if (this.state.isExpectingMore) {
       this._pullWhenScrolling(
@@ -318,7 +325,7 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
         return;
       } else if (item) {
         that.setState((prev: State<T>) => ({
-          data: [item].concat(prev.data),
+          data: [item].concat(prev.data as any),
           isExpectingMore: prev.isExpectingMore,
           updateInt: 1 - prev.updateInt,
           refreshing: prev.refreshing,
@@ -465,11 +472,12 @@ export class PullFlatList<T> extends Component<PullFlatListProps<T>, State<T>> {
   }
 
   public scrollToOffset(opts: any) {
-    if ((this.flatListRef as any)?.scrollToOffset) {
-      (this.flatListRef as any).scrollToOffset(opts);
-      return;
+    if (!this.flatListRef) return;
+
+    if (typeof (this.flatListRef as FlatList).scrollToOffset === 'function') {
+      (this.flatListRef as FlatList).scrollToOffset(opts);
     } else if (
-      this.flatListRef?._component &&
+      this.flatListRef._component &&
       typeof this.flatListRef._component.scrollToOffset === 'function'
     ) {
       this.flatListRef._component.scrollToOffset(opts);
